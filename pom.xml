@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+ 
+    <parent>
+		<groupId>sc.fiji</groupId>
+		<artifactId>pom-fiji</artifactId>
+		<version>17.0.0</version>
+		<relativePath />
+	</parent>
+ 
+    <artifactId>SpermQ_MF</artifactId>
+    <version>0.3.0-SNAPSHOT</version>
+    <groupId>JNH</groupId>
+ 
+<!-- TODO: Fill out these sections -->
+    <name>SpermQ-MF</name>
+    <description>Analyze sperm from multifocal images</description>
+    <url>https://github.com/hansenjn/</url>
+	<inceptionYear>2017</inceptionYear>
+	<organization>
+		<name>JNH</name>
+		<url>https://github.com/hansenjn/SpermQ-MF</url>
+	</organization>
+ 
+    <developers>
+        <developer>
+            <id></id>
+            <name>Jan Niklas Hansen</name>
+            <email>jan.hansen(at)uni-bonn.de</email>
+            <url>https://github.com/hansenjn/</url>
+          	<organization>University of Bonn - Institute of Innate immunity - Biophysical Imaging</organization>
+            <organizationUrl>http://www.iii.uni-bonn.de/en/wachten_lab/</organizationUrl>
+            <roles>
+                <role>founder</role>
+                <role>lead</role>
+                <role>developer</role>
+                <role>debugger</role>
+                <role>reviewer</role>
+                <role>support</role>
+                <role>maintainer</role>
+            </roles>
+            <timezone>+1</timezone>
+        </developer>
+        
+        <developer>
+            <id></id>
+            <name>Jan F Jikeli</name>
+            <email>jan.jikeli(at)uni-bonn.de</email>
+            <url>r</url>
+            <organization>University of Bonn - Institute of Innate immunity - Biophysical Imaging</organization>
+            <organizationUrl>http://www.iii.uni-bonn.de/en/wachten_lab/</organizationUrl>
+            <roles>
+                <role>founder</role>
+                <role>lead</role>
+                <role>developer</role>
+                <role>debugger</role>
+                <role>reviewer</role>
+            </roles>
+            <timezone>+1</timezone>
+        </developer>
+    </developers>
+    
+    <contributors>
+        <!--
+        NB: Need a least one element to override the parent.
+        See: https://issues.apache.org/jira/browse/MNG-5220
+        -->
+        <contributor><name>None</name></contributor>
+    </contributors>
+ 
+ 	<mailingLists>
+		<mailingList>
+			<name>ImageJ Forum</name>
+			<archive>http://forum.imagej.net/</archive>
+		</mailingList>
+	</mailingLists>
+ 	
+ 	<scm>
+		<connection>scm:git:git://github.com/hansenjn/SpermQ-MF</connection>
+		<developerConnection>scm:git:git@github.com:hansenjn/SpermQ-MF</developerConnection>
+		<tag>HEAD</tag>
+		<url>https://github.com/hansenjn/SpermQ-MF</url>
+	</scm>
+ 	
+ 	<issueManagement>
+		<system>GitHub Issues</system>
+		<url>https://github.com/hansenjn/SpermQ-MF/issues</url>
+	</issueManagement>
+ 	
+ 	<ciManagement>
+		<system>None</system>
+	</ciManagement>
+ 	
+ 	<properties>
+		<main-class>multi_focal</main-class>
+		<package-name>spermQ_mf</package-name>
+		<license.licenseName>gpl_v3</license.licenseName>
+		<license.copyrightOwners>Jan Niklas Hansen, Jan F Jikeli</license.copyrightOwners>
+		<license.projectName>SpermQ-MF</license.projectName>
+	</properties>
+ 
+ 	 <repositories>
+        <!-- NB: for project parent, in case of partial checkout -->
+        <repository>
+            <id>imagej.public</id>
+            <url>http://maven.imagej.net/content/groups/public</url>
+        </repository>
+    </repositories>
+ 
+<!-- TODO: See Optional Dependencies section -->
+    <dependencies>
+        <!-- ImageJ dependencies -->
+        <dependency>
+            <groupId>net.imagej</groupId>
+            <artifactId>ij</artifactId>
+        </dependency>
+    </dependencies>  
+    
+   <build>
+<!--        <directory>target</directory> -->
+<!--     	<outputDirectory>target/classes</outputDirectory> -->
+<!--     	<finalName>${artifactId}-${version}</finalName> -->
+		<plugins>
+			<!--         avoid errors in java doc creation -->			
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<configuration>
+					<additionalparam>-Xdoclint:none</additionalparam>
+				</configuration>
+			</plugin>
+			
+			<plugin>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<projectName>Multi-focal analysis for ImageJ.</projectName>
+					<organizationName>JNH</organizationName>
+					<descriptorRefs>
+            			<descriptorRef>jar-with-dependencies</descriptorRef>
+          			</descriptorRefs>
+					<archive>
+						<manifest>
+							<mainClass>${main-class}</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>  
+</project>
