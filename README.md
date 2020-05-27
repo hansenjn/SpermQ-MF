@@ -1,5 +1,5 @@
 # SpermQ-MF
-Analyzing sperm in images from multifocal microscopy. This plugin belongs to the software published along https://doi.org/10.1101/2020.05.16.099390. Download the latest release of SpermQ-MF [here](https://github.com/hansenjn/SpermQ-MF/releases/).
+Analyzing sperm in images from multifocal microscopy. This plugin belongs to the software published along https://doi.org/10.1101/2020.05.16.099390 and uses code from the ImageJ plugin [SpermQ](https://github.com/hansenjn/SpermQ). Download the latest release of SpermQ-MF [here](https://github.com/hansenjn/SpermQ-MF/releases/).
 
 Copyright (C) 2016-2020: Jan N. Hansen; research group Biophysical Imaging, Institute of Innate Immunity, Bonn, Germany (http://www.iii.uni-bonn.de/en/wachten_lab/).
 
