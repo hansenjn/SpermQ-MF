@@ -1,14 +1,11 @@
 # SpermQ-MF
-Analyzing sperm in images from multifocal microscopy. This plugin belongs to the software published along https://doi.org/10.1101/2020.05.16.099390 and uses code from the ImageJ plugin [SpermQ](https://github.com/hansenjn/SpermQ). Download the latest release of SpermQ-MF [here](https://github.com/hansenjn/SpermQ-MF/releases/).
+Analyzing sperm in images from multifocal microscopy. This plugin belongs to the software published along https://doi.org/10.1101/2020.05.16.099390 and uses code from the ImageJ plugin [SpermQ](https://github.com/hansenjn/SpermQ). Download the latest release of SpermQ-MF [here](https://github.com/hansenjn/SpermQ-MF/releases/). This plugin belongs to the [MultiFocalImaging-AnalysisToolbox](https://github.com/hansenjn/MultifocalImaging-AnalysisToolbox). A manual for the multifocal analysis pipeline is available [here](https://github.com/hansenjn/MultifocalImaging-AnalysisToolbox/tree/master/User%20Guide).
 
 Copyright (C) 2016-2020: Jan N. Hansen; research group Biophysical Imaging, Institute of Innate Immunity, Bonn, Germany (http://www.iii.uni-bonn.de/en/wachten_lab/).
 
 Funding: DFG priority program SPP 1726 "Microswimmers".
 
 Contact: jan.hansen(at)uni-bonn.de
-
-## Manual / User Guide
-A manual for the multifocal analysis pipeline will be uploaded here soon.
 
 ## Important LICENSE note
 The newly developed software is licensed under GNU General Public License v3.0. However, this software includes packages derived from others, for which different licenses may apply. The different licenses and the authors of theses code parts are clearly stated in the respective class files or package info files. This applies to the following packages\classes:
