@@ -310,7 +310,7 @@ public class multi_focal implements PlugIn, Measurements{
 		&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&*/
 		if(selectedDSL.equals(selectionsDSL[1]) || selectedDSL.equals(selectionsDSL[3]) || selectedDSL.equals(selectionsDSL[5])
 				|| selectedDSL.equals(selectionsDSL[7]) || selectedDSL.equals(selectionsDSL[9]) || selectedDSL.equals(selectionsDSL[11])){
-			GenericDialog gd = new GenericDialog("mulit-focal analysis");		
+			GenericDialog gd = new GenericDialog(PLUGINNAME + " - detailed settings");		
 //			setInsets(top, left, bottom)
 			gd.setInsets(0,0,0);	gd.addMessage(PLUGINNAME + ", version " + PLUGINVERSION + " (\u00a9 2013-" + constants.dateY.format(new Date()) + ", JN Hansen \u0026 JF Jikeli)", constants.Head1);
 						
