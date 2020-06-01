@@ -838,8 +838,15 @@ public class multi_focal implements PlugIn, Measurements{
 //						tp.append("Registration file:	" + om.getFileName());
 					tp.append("");
 					tp.append("Settings: ");
-					tp.append("	" + "xy calibration [um]:	" + constants.df6US.format(xyCal));
 					tp.append("	" + "sample rate [Hz]:	" + constants.df6US.format(sampleRate));
+					tp.append("	" + "Orient points in 3D:	" + orientation3D);
+					tp.append("	" + "Sperm head is tethered:	" + tethered);
+					tp.append("	" + "xy calibration [um]:	" + constants.df6US.format(xyCal));
+					tp.append("	" + "Slice Positions [um] 1|2|3|4:	" 
+							+ constants.df3US.format(slicePosition [0]) 
+							+ "	" + constants.df3US.format(slicePosition [1])
+							+ "	" + constants.df3US.format(slicePosition [2]) 
+							+ "	" + constants.df3US.format(slicePosition [3]));
 					tp.append("	" + "trace determined in " + selectedTraceDetermination);
 					tp.append("	" + "selected thresholding method:	" + selectedThresholdMethod);
 					tp.append("	" + "gaussian blur for trace generation - sigma:	" + constants.df3US.format(gaussSigma));
@@ -859,7 +866,6 @@ public class multi_focal implements PlugIn, Measurements{
 					tp.append("	" + "# points before or after individual point included in xy- and z-smoothing:	" + constants.df0.format(plusMinusDistanceForSmooth));
 					tp.append("	" + "Minimum xy-arcus position of points for reference vector:	" + constants.df6US.format(minRefDist));
 					tp.append("	" + "Maximum xy-arcus position of points for reference vector:	" + constants.df6US.format(maxRefDist));
-					tp.append("	" + "Orient points in 3D:	" + orientation3D);
 					tp.append("	" + "Curvature and dAngle Calcultion - distance of upstream reference point:	" + constants.df6US.format(curvRefDist));
 					tp.append("	" + "GroupedTimesteps for fourier transform:	" + constants.df0.format(groupedTimesteps));
 					tp.append("	" + "initial arclengths neglected for forier transform (µm):	" + constants.df6US.format(neglectedInitialArclength));
