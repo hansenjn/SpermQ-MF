@@ -210,16 +210,16 @@ public class trackPoint {
 		}
 	}
 	
-	public void setOrientedVector3D(double [] referenceVector, double [][] origin, double [] targetVector, double angle, int interpolation){				
+	public void setOrientedVector3D(double [] referenceVector, double [][] origin, double [] targetVector, double angle, int smoothing){				
 		//point to rotate x,y,z
 		double x = this.getX();
 		double y = this.getY();
-		double z = 0.0;		if(interpolation!=multi_focal_tools.NOZ) z = this.getZ(interpolation);
+		double z = 0.0;		if(smoothing!=multi_focal_tools.NOZ) z = this.getZ(smoothing);
 		
 		//base point of the line
-		double a = origin [interpolation][0];
-		double b = origin [interpolation][1];
-		double c = origin [interpolation][2];
+		double a = origin [smoothing][0];
+		double b = origin [smoothing][1];
+		double c = origin [smoothing][2];
 		
 		//normalized vector (u^2+v^2+w^2 = 1) of the line to be rotated around 
 		//vector to be rotated around equals the vector of the cross-product of the reference vector and the vector of the target line
@@ -230,21 +230,21 @@ public class trackPoint {
 		double w = normalizedNormalVector [2];
 		
 		//rotation
-		orientedVectorBy3D [interpolation][0] = (a*(v*v+w*w)-u*(b*v+c*w-u*x-v*y-w*z))*(1-Math.cos(angle))
+		orientedVectorBy3D [smoothing][0] = (a*(v*v+w*w)-u*(b*v+c*w-u*x-v*y-w*z))*(1-Math.cos(angle))
 				+ x * Math.cos(angle)
-				+ ((-1)*c*v+b*w-w*y+v*z) * Math.sin(angle) - origin [interpolation][0];
+				+ ((-1)*c*v+b*w-w*y+v*z) * Math.sin(angle) - origin [smoothing][0];
 		
-		orientedVectorBy3D [interpolation][1] = (b*(u*u+w*w)-v*(a*u+c*w-u*x-v*y-w*z))*(1-Math.cos(angle))
+		orientedVectorBy3D [smoothing][1] = (b*(u*u+w*w)-v*(a*u+c*w-u*x-v*y-w*z))*(1-Math.cos(angle))
 				+ y * Math.cos(angle)
-				+ (c*u-a*w+w*x-u*z) * Math.sin(angle) - origin [interpolation][1];
+				+ (c*u-a*w+w*x-u*z) * Math.sin(angle) - origin [smoothing][1];
 		
-		orientedVectorBy3D [interpolation][2] = (c*(u*u+v*v)-w*(a*u+b*v-u*x-v*y-w*z))*(1-Math.cos(angle))
+		orientedVectorBy3D [smoothing][2] = (c*(u*u+v*v)-w*(a*u+b*v-u*x-v*y-w*z))*(1-Math.cos(angle))
 				+ z * Math.cos(angle)
-				+ ((-1)*b*u+a*v-v*x+u*y) * Math.sin(angle) - origin [interpolation][2];	
+				+ ((-1)*b*u+a*v-v*x+u*y) * Math.sin(angle) - origin [smoothing][2];	
 	}
 	
-	public void setOrientedVector3D(double [][] referenceVector, double [][] origin, double [] targetVector, double [] angle, int interpolation){
-		this.setOrientedVector3D(referenceVector [interpolation], origin, targetVector, angle [interpolation], interpolation);
+	public void setOrientedVector3D(double [][] referenceVector, double [][] origin, double [] targetVector, double [] angle, int smoothing){
+		this.setOrientedVector3D(referenceVector [smoothing], origin, targetVector, angle [smoothing], smoothing);
 	}
 	
 	public void setOrientedVector2D(double [] origin, double angle){
@@ -394,10 +394,10 @@ public class trackPoint {
 		return 0.0;
 	}
 	
-	public double getZ(int interpolation){
-		if(interpolation == multi_focal_tools.NOZ){
+	public double getZ(int smoothing){
+		if(smoothing == multi_focal_tools.NOZ){
 			return 0.0;
-		}else if(interpolation == multi_focal_tools.PUREZ){
+		}else if(smoothing == multi_focal_tools.PUREZ){
 			if(gaussZ4P == Double.NEGATIVE_INFINITY && widthZ[0][0] == Double.NEGATIVE_INFINITY){
 				IJ.error("z not initialized");
 				return 0.0;
@@ -510,10 +510,10 @@ public class trackPoint {
 //				}
 //				return finalZ;
 			}			
-		}else if(interpolation == multi_focal_tools.MEDIANZ){
+		}else if(smoothing == multi_focal_tools.MEDIANZ){
 //			if(medianInterpolatedZGauss4P==0.0)	IJ.log("returned medi " + medianInterpolatedZGauss4P);
 			return medianInterpolatedZ;
-		}else if(interpolation == multi_focal_tools.MEANZ){
+		}else if(smoothing == multi_focal_tools.MEANZ){
 			return meanInterpolatedZ;
 		}
 		return 0.0;

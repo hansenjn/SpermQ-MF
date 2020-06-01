@@ -3002,7 +3002,7 @@ public class multi_focal_tools implements Measurements{
 				}
 			}
 			
-			//Median interpolation of Freqs and Amplitudes along flagellum
+			//Median smoothing of Freqs and Amplitudes along flagellum
 			medianVs = new double [5];			
 			for(int t = 0; t < tMax + 1 - groupedTimesteps + 1; t++){
 				for(int a = neglectedWidth+1; a < width; a++){

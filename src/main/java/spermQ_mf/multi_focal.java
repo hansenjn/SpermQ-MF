@@ -1,7 +1,6 @@
 /***===============================================================================
  
  SpermQ-MF Version v0.3.0
-
  This program is free software; you can redistribute it and/or
  modify it under the terms of the GNU General Public License
  as published by the Free Software Foundation (http://www.gnu.org/licenses/gpl.txt )
@@ -43,8 +42,8 @@ public class multi_focal implements PlugIn, Measurements{
 	//Name
 		public static final String PLUGINNAME = "SpermQ-MF";
 		public static final String PLUGINVERSION = "v0.3.0";
-		public static final double [] PLANEPOSITIONS20X = {31.00735294, 22.23676471, 9.266176471, 17.48970588}; //calc from 17 z-stacks through sperm (exp date 2016-09-28)
-		public static final double [] PLANEPOSITIONS32X = {0.0, 3.5, 5, 8.5}; //from 1 cal grid (from exp date 2016-09-01) 
+		public static final double [] PLANEPOSITIONS20X = {31.00735294, 22.23676471, 9.266176471, 17.48970588};
+		public static final double [] PLANEPOSITIONS32X = {0.0, 3.5, 5, 8.5};
 	//Default Settings loader
 		String [] selectionsDSL = {"Mouse 20x", "Mouse 20x (editable)", 
 				"Mouse 32x", "Mouse 32x (editable)",
@@ -54,13 +53,7 @@ public class multi_focal implements PlugIn, Measurements{
 				"Fluorescent Tethered Human 32x", "Fluorescent Tethered Human 32x (editable)"}; 
 		String selectedDSL = selectionsDSL [5];
 		
-	//variables
-		
-//		double [] slicePosition = {14.0, 17.6, 19.5, 22.9};
-//		double [] slicePosition = {17.6, 14.0, 22.9, 19.5};	//180 deg turned variant from Jan initial example data
-//		double [] slicePosition = {0, 3.5, 5, 8.5};	//32x 20160901 from cal grid 
-//		double [] slicePosition = {40.9, 31.8, 19.2, 27.3};	//20x 20160929 from cal grid
-//		double [] slicePosition = {42.3, 33.1, 20.4, 28.7};	//20x 20160929 from sperm n1 3
+	//variables		
 		double [] slicePosition = PLANEPOSITIONS20X;
 		
 		boolean calibrationMode = false;
@@ -81,14 +74,14 @@ public class multi_focal implements PlugIn, Measurements{
 		boolean smoothNormal = true,
 				useNormalMaxForZGauss = true;
 		boolean getWidthFitZ = true;
-		boolean getG4PZ = false;
+		boolean getG4PZ = true;
 		double LUTStepSize = 0.1;
 		
-		double acceptedZIpDistance = 9.6;
-		int plusMinusDistanceIp = 5*upscaleFold;
+		double acceptedZSmoothDistance = 9.6;
+		int plusMinusDistanceForSmooth = 5*upscaleFold;
 		double minRefDist = 0.0, maxRefDist = 6.4;
-		static final String [] zInterpolationMethods = {"none", "median", "mean"}; 
-		String zInterpolationMethod = zInterpolationMethods [1];
+		static final String [] zSmoothingMethods = {"none", "median", "mean"}; 
+		String zSmoothingMethod = zSmoothingMethods [1];
 		
 		boolean tethered = false,
 				unifyStartPoints = false,
@@ -118,7 +111,7 @@ public class multi_focal implements PlugIn, Measurements{
 		Load Default Settings
 		&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&*/
 		
-		GenericDialog gdDSL = new GenericDialog("SpermTracker_ Default Settings Loader");		
+		GenericDialog gdDSL = new GenericDialog(PLUGINNAME + " - Default Settings Loader");		
 		gdDSL.setInsets(0,0,0);		gdDSL.addMessage(PLUGINNAME + ", version " + PLUGINVERSION + " (\u00a9 2013-" + constants.dateY.format(new Date()) + ", JN Hansen \u0026 JF Jikeli)", constants.Head1);
 		gdDSL.setInsets(10,0,0);	gdDSL.addMessage("Default Settings Loader ", constants.Head2);
 		gdDSL.setInsets(10,0,0);	gdDSL.addMessage("Experimental setup ", constants.BoldTxt);
@@ -134,9 +127,9 @@ public class multi_focal implements PlugIn, Measurements{
 		gdDSL.setInsets(0,0,0);		gdDSL.addCheckbox("Width calibration mode", calibrationMode);
 		gdDSL.setInsets(0,0,0);		gdDSL.addCheckbox("Alternatively: test calibration mode", calibrationTestMode);
 		
-		gdDSL.setInsets(20,0,0);	gdDSL.addMessage("IMPORTANT NOTE: If you analyze stacks containing lots of frames (e.g. > 4000), the software", constants.PlTxt);
-		gdDSL.setInsets(0,0,0);		gdDSL.addMessage("might crush. Thus, it is recommended to split the stack into seperate sub-stacks and analyze those", constants.PlTxt);
-		gdDSL.setInsets(0,0,0);		gdDSL.addMessage("sub-stacks separately. Per time-step approximately 2.5MB of RAM are needed.", constants.PlTxt);
+		gdDSL.setInsets(20,0,0);	gdDSL.addMessage("IMPORTANT NOTE: If you analyze stacks containing lots of frames (e.g. > 4000), your RAM capacity", constants.PlTxt);
+		gdDSL.setInsets(0,0,0);		gdDSL.addMessage("may be exceeded and the plugin stops working. Thus, it is recommended to split the stack into", constants.PlTxt);
+		gdDSL.setInsets(0,0,0);		gdDSL.addMessage("seperate sub-stacks and analyze those sub-stacks separately.", constants.PlTxt);
 		
 		gdDSL.showDialog();
 		
@@ -168,11 +161,11 @@ public class multi_focal implements PlugIn, Measurements{
 			saveVNRois = false;
 			preventHeadFromCorr = true;
 			preventPoints = 10;
-			plusMinusDistanceIp = 5*upscaleFold;
+			plusMinusDistanceForSmooth = 5*upscaleFold;
 			minRefDist = 0.0;
 			maxRefDist = 15;
-			acceptedZIpDistance = 9.6;
-			zInterpolationMethod = zInterpolationMethods [1];
+			acceptedZSmoothDistance = 9.6;
+			zSmoothingMethod = zSmoothingMethods [1];
 			curvRefDist = 10.0;
 			neglectedInitialArclength = 20.0;
 			hrPlusMinusRange = 10;
@@ -194,11 +187,11 @@ public class multi_focal implements PlugIn, Measurements{
 			saveVNRois = false;
 			preventHeadFromCorr = true;
 			preventPoints = 15;
-			plusMinusDistanceIp = 7*upscaleFold;
+			plusMinusDistanceForSmooth = 7*upscaleFold;
 			minRefDist = 0.0;
 			maxRefDist = 15;
-			acceptedZIpDistance = 9.6;
-			zInterpolationMethod = zInterpolationMethods [1];
+			acceptedZSmoothDistance = 9.6;
+			zSmoothingMethod = zSmoothingMethods [1];
 			curvRefDist = 10.0;
 			neglectedInitialArclength = 20.0;
 			hrPlusMinusRange = 15;
@@ -220,11 +213,11 @@ public class multi_focal implements PlugIn, Measurements{
 			saveVNRois = false;
 			preventHeadFromCorr = false;
 			preventPoints = 15;			
-			plusMinusDistanceIp = 5*upscaleFold;
+			plusMinusDistanceForSmooth = 5*upscaleFold;
 			minRefDist = 4.0;
 			maxRefDist = 10.0;
-			acceptedZIpDistance = 9.6;
-			zInterpolationMethod = zInterpolationMethods [1];
+			acceptedZSmoothDistance = 9.6;
+			zSmoothingMethod = zSmoothingMethods [1];
 			curvRefDist = 10.0;
 			neglectedInitialArclength = 0.0;
 			hrPlusMinusRange = 10;
@@ -246,11 +239,11 @@ public class multi_focal implements PlugIn, Measurements{
 			saveVNRois = false;
 			preventHeadFromCorr = false;
 			preventPoints = 15;		
-			plusMinusDistanceIp = 5*upscaleFold;
+			plusMinusDistanceForSmooth = 5*upscaleFold;
 			minRefDist = 0.0;
 			maxRefDist = 6.4;
-			acceptedZIpDistance = 9.6;
-			zInterpolationMethod = zInterpolationMethods [1];
+			acceptedZSmoothDistance = 9.6;
+			zSmoothingMethod = zSmoothingMethods [1];
 			curvRefDist = 10.0;
 			neglectedInitialArclength = 0.0;
 			hrPlusMinusRange = 15;
@@ -272,11 +265,11 @@ public class multi_focal implements PlugIn, Measurements{
 			saveVNRois = false;
 			preventHeadFromCorr = false;
 			preventPoints = 15;			
-			plusMinusDistanceIp = 5*upscaleFold;
+			plusMinusDistanceForSmooth = 5*upscaleFold;
 			minRefDist = 0.0;
 			maxRefDist = 6.4;
-			acceptedZIpDistance = 9.6;
-			zInterpolationMethod = zInterpolationMethods [1];
+			acceptedZSmoothDistance = 9.6;
+			zSmoothingMethod = zSmoothingMethods [1];
 			curvRefDist = 10.0;
 			neglectedInitialArclength = 0.0;
 			hrPlusMinusRange = 15;
@@ -298,11 +291,11 @@ public class multi_focal implements PlugIn, Measurements{
 			saveVNRois = false;
 			preventHeadFromCorr = false;
 			preventPoints = 15;
-			plusMinusDistanceIp = 5*upscaleFold;
+			plusMinusDistanceForSmooth = 5*upscaleFold;
 			minRefDist = 0.0;
 			maxRefDist = 6.4;
-			acceptedZIpDistance = 9.6;
-			zInterpolationMethod = zInterpolationMethods [1];
+			acceptedZSmoothDistance = 9.6;
+			zSmoothingMethod = zSmoothingMethods [1];
 			curvRefDist = 10.0;
 			neglectedInitialArclength = 0.0;
 			hrPlusMinusRange = 15;
@@ -343,13 +336,13 @@ public class multi_focal implements PlugIn, Measurements{
 			gd.setInsets(0,0,0);	gd.addCheckbox("Exclude head from correction/deletion/Zkymographs (initial (" + preventPoints + " * upscaling factor) points)", preventHeadFromCorr);
 			gd.setInsets(0,0,0);	gd.addCheckbox("Save Roi-sets of vectors and normals", saveVNRois);
 			
-			gd.setInsets(10,0,0);	gd.addMessage("Z-determination, interpolation and kymographs", constants.BoldTxt);
+			gd.setInsets(10,0,0);	gd.addMessage("z-determination, smoothing, kymographs", constants.BoldTxt);
 			gd.setInsets(0,0,0);	gd.addCheckbox("Use Gauss-4-Point fit for z determination:", getG4PZ);
-			gd.setInsets(0,0,0);	gd.addCheckbox("Use width fit for z determination:", getWidthFitZ);
-			gd.setInsets(-23,0,0);	gd.addNumericField("width fit LUT step size", LUTStepSize, 2);
-			gd.setInsets(0,0,0);	gd.addChoice("z-interpolation ", zInterpolationMethods, zInterpolationMethod);
-			gd.setInsets(0,0,0);	gd.addNumericField("Accepted xy distance of points for z interpolation [um]", acceptedZIpDistance, 5);
-			gd.setInsets(0,0,0);	gd.addNumericField("# (+/-)-consecutive points for xy- and z-interpolation", plusMinusDistanceIp, 0);
+			gd.setInsets(0,0,0);	gd.addCheckbox("Use width for z-determination: LUT step size [um]", getWidthFitZ);
+			gd.setInsets(-23,0,0);	gd.addNumericField("", LUTStepSize, 2);
+			gd.setInsets(0,0,0);	gd.addChoice("z-smoothing ", zSmoothingMethods, zSmoothingMethod);
+			gd.setInsets(0,0,0);	gd.addNumericField("Accepted xy distance of points for z smoothing [um]", acceptedZSmoothDistance, 5);
+			gd.setInsets(0,0,0);	gd.addNumericField("# (+/-)-consecutive points for xy- and z-smoothing", plusMinusDistanceForSmooth, 0);
 			gd.setInsets(0,0,0);	gd.addNumericField("Min | Max xy-arcus position for reference vector [um]", minRefDist, 3);
 			gd.setInsets(-23,55,0);	gd.addNumericField("", maxRefDist, 3);
 
@@ -386,9 +379,9 @@ public class multi_focal implements PlugIn, Measurements{
 			getWidthFitZ = gd.getNextBoolean();
 			LUTStepSize = (double) gd.getNextNumber();
 			
-			zInterpolationMethod = gd.getNextChoice();
-			acceptedZIpDistance = (double) gd.getNextNumber();
-			plusMinusDistanceIp = (int) gd.getNextNumber();
+			zSmoothingMethod = gd.getNextChoice();
+			acceptedZSmoothDistance = (double) gd.getNextNumber();
+			plusMinusDistanceForSmooth = (int) gd.getNextNumber();
 			minRefDist = (double) gd.getNextNumber();
 			maxRefDist = (double) gd.getNextNumber();
 			
@@ -413,11 +406,11 @@ public class multi_focal implements PlugIn, Measurements{
 		}
 			  	
 	  	int encoding = 0;
-  		if(zInterpolationMethod.equals(zInterpolationMethods[0])){	//NONE
+  		if(zSmoothingMethod.equals(zSmoothingMethods[0])){	//NONE
   			encoding = multi_focal_tools.PUREZ;					  			  		
-	  	}else if(zInterpolationMethod.equals(zInterpolationMethods[1])){	//MEDIAN
+	  	}else if(zSmoothingMethod.equals(zSmoothingMethods[1])){	//MEDIAN
 	  		encoding = multi_focal_tools.MEDIANZ;	
-	  	}else if(zInterpolationMethod.equals(zInterpolationMethods[2])){	//MEAN
+	  	}else if(zSmoothingMethod.equals(zSmoothingMethods[2])){	//MEAN
 	  		encoding = multi_focal_tools.MEANZ;	
 	  	}
 				
@@ -646,7 +639,7 @@ public class multi_focal implements PlugIn, Measurements{
 				  	 	
 				  	 	for(int i = 0; i < traces.size(); i++){
 				  	 		progress.updateBarText("interpolate xy ... (" + (i+1) + "/" + traces.size());
-				  	 		traces.get(i).interpolateXYLinear(plusMinusDistanceIp, multi_focal_tools.MEAN);
+				  	 		traces.get(i).interpolateXYLinear(plusMinusDistanceForSmooth, multi_focal_tools.MEAN);
 				  		}
 			  	 		
 //				  	 		multi_focal_tools.saveTraceImage(imp, traces, multi_focal_tools.NOZ,
@@ -716,7 +709,7 @@ public class multi_focal implements PlugIn, Measurements{
 						  	
 					  	//interpolate z fit
 					  		progress.updateBarText("interpolate z...");
-					  		multi_focal_tools.interpolateZLinear(traces, progress, acceptedZIpDistance, plusMinusDistanceIp);
+					  		multi_focal_tools.interpolateZLinear(traces, progress, acceptedZSmoothDistance, plusMinusDistanceForSmooth);
 		//			  		for(int i = 0; i < traces.size(); i++){
 		//			  			traces.get(i).sortPointsAndRemoveOutliers(progress, multi_focal_tools.G4PZMEDIAN);
 		//			  		}			  		
@@ -856,10 +849,14 @@ public class multi_focal implements PlugIn, Measurements{
 					tp.append("	" + "max vector length [points]:	" + constants.df0.format(maxVectorLength));
 					tp.append("	" + "normal vector radius [um]:	" + constants.df6US.format(normalLength));
 					tp.append("	" + "Smooth normal for xyz fit:	" + smoothNormal);
-					tp.append("	" + "Use normal maximum for z fit:	" + useNormalMaxForZGauss);
+//					tp.append("	" + "Use normal maximum for z fit:	" + useNormalMaxForZGauss);
 					tp.append("	" + "Exclude head points from correction/deletion/zkymographs (initial " + preventPoints + " points):	" + preventHeadFromCorr);
-					tp.append("	" + "Accepted xy distance for z interpolation:	" + constants.df6US.format(acceptedZIpDistance));
-					tp.append("	" + "# points before or after individual point included in xy- and z-interpolation:	" + constants.df0.format(plusMinusDistanceIp));
+					tp.append("	" + "Use Gauss-4-Point fit for z determination:	" + getG4PZ);
+					tp.append("	" + "Use width fit for z determination:	" + getWidthFitZ);
+					tp.append("	" + "Width fit - LUT step size [um]:	" + constants.df3US.format(LUTStepSize));
+					tp.append("	" + "Z-smoothing method:	" + zSmoothingMethod);
+					tp.append("	" + "Accepted xy distance for z-smoothing:	" + constants.df6US.format(acceptedZSmoothDistance));					
+					tp.append("	" + "# points before or after individual point included in xy- and z-smoothing:	" + constants.df0.format(plusMinusDistanceForSmooth));
 					tp.append("	" + "Minimum xy-arcus position of points for reference vector:	" + constants.df6US.format(minRefDist));
 					tp.append("	" + "Maximum xy-arcus position of points for reference vector:	" + constants.df6US.format(maxRefDist));
 					tp.append("	" + "Orient points in 3D:	" + orientation3D);
@@ -900,7 +897,7 @@ public class multi_focal implements PlugIn, Measurements{
 							}						 
 							tp.append(add);
 						}					
-						tp.append("Angle Theta [°]:		2D	3D no interpolation	3D mean interpolation	3D median interpolation");
+						tp.append("Angle Theta [°]:		2D	3D no smoothing	3D mean smoothing	3D median smoothing");
 						for(int i = 0; i < traces.size(); i++){
 							tp.append("	" + traces.get(i).getFrame()
 									+ "	" + constants.df6US.format(traces.get(i).getThetaDegree(multi_focal_tools.NOZ))

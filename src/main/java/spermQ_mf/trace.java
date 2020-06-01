@@ -173,7 +173,7 @@ public class trace {
 		System.gc();
 	}
 	
-	public void interpolateXYLinear(int plusMinusRange, int interpolationType){
+	public void interpolateXYLinear(int plusMinusRange, int smoothingType){
 		int nrOfPoints = points.size();
 		
 		//create point coordinate list
@@ -227,18 +227,18 @@ public class trace {
 				
 
 				Arrays.sort(distances);
-				if(interpolationType == multi_focal_tools.MINDIST){
+				if(smoothingType == multi_focal_tools.MINDIST){
 					
 					index1 = tools.getIndexOfClosestValue(tools.getArrayColumn(data, 2), distances[1]);
 					points.get(j).resetXCoordinate(data[index1][0]);
 					points.get(j).resetYCoordinate(data[index1][1]);
 					
-				}else if(interpolationType == multi_focal_tools.MAXDIST){
+				}else if(smoothingType == multi_focal_tools.MAXDIST){
 					index1 = tools.getIndexOfClosestValue(tools.getArrayColumn(data, 2), distances[interPolCt-1]);
 					points.get(j).resetXCoordinate(data[index1][0]);
 					points.get(j).resetYCoordinate(data[index1][1]);
 					
-				}else if(interpolationType == multi_focal_tools.MEAN){
+				}else if(smoothingType == multi_focal_tools.MEAN){
 					double x = 0.0, y = 0.0;
 					for(int i = 0; i < interPolCt; i++){
 						x += data [i][0];
@@ -248,7 +248,7 @@ public class trace {
 					points.get(j).resetXCoordinate(x/(double)(interPolCt));
 					points.get(j).resetYCoordinate(y/(double)(interPolCt));
 					
-				}else if(interpolationType == multi_focal_tools.MEDIAN){	
+				}else if(smoothingType == multi_focal_tools.MEDIAN){	
 //					double [] x = new double [interPolCt+1], y  = new double [interPolCt+1];
 //					for(int i = 0; i <= interPolCt; i++){
 ////						if(data[i][0] == Double.MAX_VALUE) IJ.log("problem " + i);
@@ -280,7 +280,7 @@ public class trace {
 					}
 					
 				}else{
-					IJ.error("wrong type of xy interpolation");
+					IJ.error("wrong type of xy smoothing");
 				}
 			}
 			
@@ -460,7 +460,7 @@ public class trace {
 	}
 	
 	public void interpolateZLinear(double acceptedDist, int plusMinusPoints){	
-//		IJ.log("interpolation started");
+//		IJ.log("smoothing started");
 		int nrOfPoints = points.size();
 		int plusMinusPointsThird = (int)((double)plusMinusPoints/3.0);
 		
