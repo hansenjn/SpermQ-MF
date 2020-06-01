@@ -12,3 +12,5 @@ The newly developed software is licensed under GNU General Public License v3.0. 
 - edu.emory.mathcs.jtransforms.fft\DoubleFFT_1D.java & edu.emory.mathcs.utils\ConcurrencyUtils.java (MPL 1.1/GPL 2.0/LGPL 2.1, Mozilla Public License Version 1.1, author: Piotr Wendykier)
 - AnalyzeSkeleton & Skeletonize3D (GNU General Public License, http://www.gnu.org/licenses/gpl.txt, author: Ignacio Arganda-Carreras)
 
+## Exemple data
+Exemplary data sets with output files can be found [here](https://github.com/hansenjn/MultifocalImaging-AnalysisToolbox/tree/master/Example%20Data/SpermQ-MF).
