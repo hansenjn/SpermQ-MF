@@ -2,27 +2,42 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
  
-    <parent>
-		<groupId>sc.fiji</groupId>
-		<artifactId>pom-fiji</artifactId>
-		<version>17.0.0</version>
+   	<parent>
+		<groupId>org.scijava</groupId>
+		<artifactId>pom-scijava</artifactId>
+		<version>17.1.1</version>
 		<relativePath />
-	</parent>
+	</parent> 
  
     <artifactId>SpermQ_MF</artifactId>
-    <version>0.3.0-SNAPSHOT</version>
-    <groupId>JNH</groupId>
+    <version>0.3.1-SNAPSHOT</version>
+    <groupId>JNH</groupId> 
  
-<!-- TODO: Fill out these sections -->
     <name>SpermQ-MF</name>
-    <description>Analyze sperm from multifocal images</description>
-    <url>https://github.com/hansenjn/</url>
+    <description>Analyze flagella in multifocal images</description>
+    <url>https://github.com/hansenjn/SpermQ-MF</url>
 	<inceptionYear>2017</inceptionYear>
 	<organization>
 		<name>JNH</name>
 		<url>https://github.com/hansenjn/SpermQ-MF</url>
 	</organization>
- 
+	
+	<properties>
+		<main-class>multi_focal</main-class>
+		<package-name>spermQ_mf</package-name>
+		<license.licenseName>gpl_v3</license.licenseName>
+		<license.copyrightOwners>Jan Niklas Hansen, Jan F Jikeli</license.copyrightOwners>
+		<license.projectName>SpermQ-MF</license.projectName>
+	</properties>
+ 	
+	<licenses>
+		<license>
+			<name>GNU General Public License v3+</name>
+			<url>http://www.gnu.org/licenses/gpl.html</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+ 	 	
     <developers>
         <developer>
             <id></id>
@@ -91,24 +106,7 @@
  	<ciManagement>
 		<system>None</system>
 	</ciManagement>
- 	
- 	<properties>
-		<main-class>multi_focal</main-class>
-		<package-name>spermQ_mf</package-name>
-		<license.licenseName>gpl_v3</license.licenseName>
-		<license.copyrightOwners>Jan Niklas Hansen, Jan F Jikeli</license.copyrightOwners>
-		<license.projectName>SpermQ-MF</license.projectName>
-	</properties>
- 
- 	 <repositories>
-        <!-- NB: for project parent, in case of partial checkout -->
-        <repository>
-            <id>imagej.public</id>
-            <url>http://maven.imagej.net/content/groups/public</url>
-        </repository>
-    </repositories>
- 
-<!-- TODO: See Optional Dependencies section -->
+  
     <dependencies>
         <!-- ImageJ dependencies -->
         <dependency>

@@ -1,6 +1,6 @@
 /***===============================================================================
  
- SpermQ-MF Version v0.3.0
+ SpermQ-MF Version v0.3.1
  This program is free software; you can redistribute it and/or
  modify it under the terms of the GNU General Public License
  as published by the Free Software Foundation (http://www.gnu.org/licenses/gpl.txt )
@@ -41,7 +41,7 @@ import spermQ_mf.jnhsupport.*;
 public class multi_focal implements PlugIn, Measurements{
 	//Name
 		public static final String PLUGINNAME = "SpermQ-MF";
-		public static final String PLUGINVERSION = "v0.3.0";
+		public static final String PLUGINVERSION = "v0.3.1";
 		public static final double [] PLANEPOSITIONS20X = {31.00735294, 22.23676471, 9.266176471, 17.48970588};
 		public static final double [] PLANEPOSITIONS32X = {0.0, 3.5, 5, 8.5};
 	//Default Settings loader
@@ -113,6 +113,8 @@ public class multi_focal implements PlugIn, Measurements{
 		
 		GenericDialog gdDSL = new GenericDialog(PLUGINNAME + " - Default Settings Loader");		
 		gdDSL.setInsets(0,0,0);		gdDSL.addMessage(PLUGINNAME + ", version " + PLUGINVERSION + " (\u00a9 2013-" + constants.dateY.format(new Date()) + ", JN Hansen \u0026 JF Jikeli)", constants.Head1);
+		gdDSL.setInsets(0,0,0);	gdDSL.addMessage("Manual, credits, and more: https://github.com/hansenjn/SpermQ-MF", constants.BoldTxt);
+		
 		gdDSL.setInsets(10,0,0);	gdDSL.addMessage("Default Settings Loader ", constants.Head2);
 		gdDSL.setInsets(10,0,0);	gdDSL.addMessage("Experimental setup ", constants.BoldTxt);
 		gdDSL.setInsets(0,0,0);		gdDSL.addNumericField("Sample rate [Hz]", sampleRate, 2);
@@ -313,7 +315,8 @@ public class multi_focal implements PlugIn, Measurements{
 			GenericDialog gd = new GenericDialog(PLUGINNAME + " - detailed settings");		
 //			setInsets(top, left, bottom)
 			gd.setInsets(0,0,0);	gd.addMessage(PLUGINNAME + ", version " + PLUGINVERSION + " (\u00a9 2013-" + constants.dateY.format(new Date()) + ", JN Hansen \u0026 JF Jikeli)", constants.Head1);
-						
+			gd.setInsets(0,0,0);	gd.addMessage("Manual, credits, and more: https://github.com/hansenjn/SpermQ-MF", constants.BoldTxt);
+			
 			gd.setInsets(10,0,0);	gd.addNumericField("xy calibration [um]", xyCal, 5);
 			gd.setInsets(0,0,0);	gd.addNumericField("Slice Positions [um]: 1 | 2", slicePosition [0], 5);
 			gd.setInsets(-23,55,0);	gd.addNumericField("", slicePosition [1], 5);
@@ -554,6 +557,7 @@ public class multi_focal implements PlugIn, Measurements{
 		TextPanel tp;
 		
 		//processing
+		int groupedTimestepsForSeq;
 		tasking: for(int task = 0; task < tasks; task++){
 			progress.updateBarText("in progress...");
 			startDate = new Date();
@@ -572,11 +576,23 @@ public class multi_focal implements PlugIn, Measurements{
 				
 				//Check if image ist processable
 				if(imp.getBitDepth()==24){
-		    		progress.notifyMessage("ERROR: Multi focal analysis cannot be used for RGB images!", ProgressDialog.ERROR);
+		    		progress.notifyMessage("ERROR: SpermQ-MF cannot process RGB images!", ProgressDialog.ERROR);
 			  		break running;
 		    	}
+				
+				//Check stack properties
+				if(imp.getNChannels() > 1){
+					progress.notifyMessage("ERROR: SpermQ-MF cannot process multi-channel images!", ProgressDialog.ERROR);
+					break running;
+				}
+			
+				groupedTimestepsForSeq = groupedTimesteps;
+		    	if(imp.getNFrames() < groupedTimestepsForSeq){
+		    		groupedTimestepsForSeq = imp.getNFrames();
+		    		progress.notifyMessage("Nr of grouped Timesteps for FFT was reduced to " + groupedTimestepsForSeq, ProgressDialog.LOG);
+		    	}				
 				  	
-				 //get traces
+				 //get point list
 				  	progress.updateBarText("get object traces...");			 
 				  	if(calibrationTestMode){
 				  		traces = multi_focal_tools.getObjectTraces(imp, selectedThresholdMethod, gaussSigma, 
@@ -780,51 +796,51 @@ public class multi_focal implements PlugIn, Measurements{
 				  	//Frequencies: analysis
 				  	if(!calibrationMode && !calibrationTestMode){
 				  		progress.updateBarText("calculate X frequencies");
-					  	freqSummaryX [task] = multi_focal_tools.getAndSaveFrequencies(traces, savePath, xyCal, groupedTimesteps,
+					  	freqSummaryX [task] = multi_focal_tools.getAndSaveFrequencies(traces, savePath, xyCal, groupedTimestepsForSeq,
 					  			multi_focal_tools.KYMOX, multi_focal_tools.NOZ, sampleRate, neglectedInitialArclength, orientation3D, speciesLength);
 					  	
 					  	progress.updateBarText("calculate Y frequencies");
-					  	freqSummaryY [task] = multi_focal_tools.getAndSaveFrequencies(traces, savePath, xyCal, groupedTimesteps,
+					  	freqSummaryY [task] = multi_focal_tools.getAndSaveFrequencies(traces, savePath, xyCal, groupedTimestepsForSeq,
 					  			multi_focal_tools.KYMOY, multi_focal_tools.NOZ, sampleRate, neglectedInitialArclength, orientation3D, speciesLength);
 					  	
 					  	progress.updateBarText("calculate Z frequencies ...");
-				  		freqSummaryZ [task] = multi_focal_tools.getAndSaveFrequencies(traces, savePath, xyCal, groupedTimesteps,
+				  		freqSummaryZ [task] = multi_focal_tools.getAndSaveFrequencies(traces, savePath, xyCal, groupedTimestepsForSeq,
 				  				multi_focal_tools.KYMOZ, encoding, sampleRate, neglectedInitialArclength, orientation3D, speciesLength);
 				  		
 				  		progress.updateBarText("calculate curvature frequencies ...");
-				  		freqSummaryCurv2D [task] = multi_focal_tools.getAndSaveFrequencies(traces, savePath, xyCal, groupedTimesteps,
+				  		freqSummaryCurv2D [task] = multi_focal_tools.getAndSaveFrequencies(traces, savePath, xyCal, groupedTimestepsForSeq,
 				  				multi_focal_tools.KYMOCURV2D, multi_focal_tools.NOZ, sampleRate, neglectedInitialArclength, orientation3D, speciesLength);
 						System.gc();
-				  		freqSummaryCurv3D [task] = multi_focal_tools.getAndSaveFrequencies(traces, savePath, xyCal, groupedTimesteps,
+				  		freqSummaryCurv3D [task] = multi_focal_tools.getAndSaveFrequencies(traces, savePath, xyCal, groupedTimestepsForSeq,
 				  				multi_focal_tools.KYMOCURV3D, encoding, sampleRate, neglectedInitialArclength, orientation3D, speciesLength);
 				  		System.gc();
 				  		
 				  		progress.updateBarText("calculate curvature angle frequencies ...");
-				  		freqSummaryCAngle2D [task] = multi_focal_tools.getAndSaveFrequencies(traces, savePath, xyCal, groupedTimesteps,
+				  		freqSummaryCAngle2D [task] = multi_focal_tools.getAndSaveFrequencies(traces, savePath, xyCal, groupedTimestepsForSeq,
 				  				multi_focal_tools.KYMOCANGLE2D, multi_focal_tools.NOZ, sampleRate, neglectedInitialArclength, orientation3D, speciesLength);
 						System.gc();
-				  		freqSummaryCAngle3D [task] = multi_focal_tools.getAndSaveFrequencies(traces, savePath, xyCal, groupedTimesteps,
+				  		freqSummaryCAngle3D [task] = multi_focal_tools.getAndSaveFrequencies(traces, savePath, xyCal, groupedTimestepsForSeq,
 				  				multi_focal_tools.KYMOCANGLE3D, encoding, sampleRate, neglectedInitialArclength, orientation3D, speciesLength);
 				  		System.gc();
 				  		
 				  		progress.updateBarText("calculate theta freqs ...");
 				  		freqSummaryTheta2D [task] = multi_focal_tools.getAndSaveGroupedFrequenciesTraceParam(traces,
-				  				multi_focal_tools.TRACE_THETA, multi_focal_tools.NOZ, groupedTimesteps, sampleRate, savePath, 
+				  				multi_focal_tools.TRACE_THETA, multi_focal_tools.NOZ, groupedTimestepsForSeq, sampleRate, savePath, 
 				  				minIntensity, maxIntensity, minPosition, maxPosition);
 				  		freqSummaryTheta3D [task] = multi_focal_tools.getAndSaveGroupedFrequenciesTraceParam(traces,
-				  				multi_focal_tools.TRACE_THETA, encoding, groupedTimesteps, sampleRate, savePath, 
+				  				multi_focal_tools.TRACE_THETA, encoding, groupedTimestepsForSeq, sampleRate, savePath, 
 				  				minIntensity, maxIntensity, minPosition, maxPosition);
 						System.gc();
 				  		
 						progress.updateBarText("calculate head rotation freqs ...");
 				  		freqSummaryHrMaxPos [task] = multi_focal_tools.getAndSaveGroupedFrequenciesTraceParam(traces,
-				  				multi_focal_tools.TRACE_HRMAXPOSITION, multi_focal_tools.NOZ, groupedTimesteps, sampleRate, savePath, 
+				  				multi_focal_tools.TRACE_HRMAXPOSITION, multi_focal_tools.NOZ, groupedTimestepsForSeq, sampleRate, savePath, 
 				  				minIntensity, maxIntensity, minPosition, maxPosition);
 				  		freqSummaryHrMaxInt [task] = multi_focal_tools.getAndSaveGroupedFrequenciesTraceParam(traces,
-				  				multi_focal_tools.TRACE_HRMAXINTENSITY, multi_focal_tools.NOZ, groupedTimesteps, sampleRate, savePath, 
+				  				multi_focal_tools.TRACE_HRMAXINTENSITY, multi_focal_tools.NOZ, groupedTimestepsForSeq, sampleRate, savePath, 
 				  				minIntensity, maxIntensity, minPosition, maxPosition);
 				  		freqSummaryHrAngle [task] = multi_focal_tools.getAndSaveGroupedFrequenciesTraceParam(traces,
-				  				multi_focal_tools.TRACE_HRANGLE, multi_focal_tools.NOZ, groupedTimesteps, sampleRate, savePath, 
+				  				multi_focal_tools.TRACE_HRANGLE, multi_focal_tools.NOZ, groupedTimestepsForSeq, sampleRate, savePath, 
 				  				minIntensity, maxIntensity, minPosition, maxPosition);					  		
 						System.gc();
 				  		
@@ -867,7 +883,7 @@ public class multi_focal implements PlugIn, Measurements{
 					tp.append("	" + "Minimum xy-arcus position of points for reference vector:	" + constants.df6US.format(minRefDist));
 					tp.append("	" + "Maximum xy-arcus position of points for reference vector:	" + constants.df6US.format(maxRefDist));
 					tp.append("	" + "Curvature and dAngle Calcultion - distance of upstream reference point:	" + constants.df6US.format(curvRefDist));
-					tp.append("	" + "GroupedTimesteps for fourier transform:	" + constants.df0.format(groupedTimesteps));
+					tp.append("	" + "Grouped timesteps for fourier transform:	" + constants.df0.format(groupedTimestepsForSeq));
 					tp.append("	" + "initial arclengths neglected for forier transform (µm):	" + constants.df6US.format(neglectedInitialArclength));
 					tp.append("	" + "head rotation matrix radius (points):	" + constants.df0.format(hrPlusMinusRange));
 					tp.append("");

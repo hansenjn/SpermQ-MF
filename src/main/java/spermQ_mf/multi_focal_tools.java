@@ -458,7 +458,7 @@ public class multi_focal_tools implements Measurements{
 			}else if(traceDet.equals(multi_focal.TRACEDETERMINATION [4])){	//"sharpest plane in time projection"
 				selImp = impProcessing.getSingleImageFromStack(selImp, maxPos);
 			}
-			traceList.add(getTraceBySkeletonization(selImp, t, selection, sigma, algorithm, addCOM, minRefDist, maxRefDist));
+			traceList.add(getTraceBySkeletonizationV2(selImp, t, selection, sigma, algorithm, addCOM, minRefDist, maxRefDist, progress));
 			
 			if(t%100 == 0)	System.gc();
 		}
@@ -466,6 +466,9 @@ public class multi_focal_tools implements Measurements{
 		return traceList;
 	}
 	
+	/**
+	 * @deprecated in versions v0.3.1 and higher
+	 * */
 	private static trace getTraceBySkeletonization (ImagePlus impMax, int frame, Roi selection, double sigma, String thresholdAlgorithm, boolean addCOM,
 			double minRefDist, double maxRefDist){	
 		ImagePlus impMaxSave = impMax.duplicate();
@@ -488,7 +491,7 @@ public class multi_focal_tools implements Measurements{
 		//convert to 8-bit
 			optimal8BitConversion(impMax);
 					
-		//skeletonize
+		//skeletonize			
 //			IJ.run(impMax,"Skeletonize (2D/3D)","");
 			Skeletonize3D_ skelProc = new Skeletonize3D_();
 			skelProc.setup("", impMax);
@@ -662,8 +665,274 @@ public class multi_focal_tools implements Measurements{
 			return new trace(newList,frame, minRefDist, maxRefDist);
 	}
 		
+	
+	/*
+	 * New skeleton analysis method to avoid interruptions at side branches,
+	 * used from version v0.3.1 on and higher
+	 * 
+	 * To establish this method, code was derived from SpermQ v0.2.1, https://github.com/hansenjn/SpermQ‚
+	 * 	 * */
+	private static trace getTraceBySkeletonizationV2 (ImagePlus impMax, int frame, Roi selection, double sigma, String thresholdAlgorithm, boolean addCOM,
+			double minRefDist, double maxRefDist, ProgressDialog progress){	
+		ImagePlus impMaxSave = impMax.duplicate();
+		
+		//eventually scale down before finding threshold?	TODO
+		//eventually 8-bit conv before finding threshold?	TODO
+					
+		//gauss-filter
+			impMax.getProcessor().blurGaussian(sigma);
+//			IJ.log("bl1");userCheck(impMax);
+		
+		//threshold image
+			thresholdImage(impMax,thresholdAlgorithm);
+			ImagePlus impMaxSaveThresholded = impMax.duplicate();
+			
+		//gauss-filter
+			impMax.getProcessor().blurGaussian(sigma);	
+//			IJ.log("blur2");userCheck(impMax);
+					
+		//convert to 8-bit
+			optimal8BitConversion(impMax);
+					
+		//skeletonize
+			double pixelWidth = impMax.getCalibration().pixelWidth;
+			double pixelHeight = impMax.getCalibration().pixelHeight;
+			
+			impMax.getCalibration().pixelWidth = 1.0;
+			impMax.getCalibration().pixelHeight = 1.0;
+			
+			
+//			IJ.run(impMax,"Skeletonize (2D/3D)","");
+			Skeletonize3D_ skelProc = new Skeletonize3D_();
+			skelProc.setup("", impMax);
+			skelProc.run(impMax.getProcessor());
+//			IJ.log("skeletonized"); userCheck(impMax); 
+//			IJ.log("ph " + impMax.getCalibration().pixelHeight);
+		
+		//analyze skeleton for shortest path
+			AnalyzeSkeleton_ skel = new AnalyzeSkeleton_();
+			skel.calculateShortestPath = true;
+			skel.setup("", impMax);
+			
+			SkeletonResult sklRes = skel.run(AnalyzeSkeleton_.NONE, false, true, null, true, false);
+			//run(int pruneIndex, boolean pruneEnds, boolean shortPath, ImagePlus origIP, boolean silent, boolean verbose)
+			ArrayList<spermQ_mf.skeleton_analysis.Point>[] shortestPath = skel.getShortestPathPoints();
+				
+		//find longest Skeleton touching selection
+			int chosenShortestPath = 0;
+			if(shortestPath.length==0){
+				return null;
+			}else if(shortestPath.length!=1){
+				double maxLength = 0.0;
+				for(int i = 0; i < sklRes.getNumOfTrees(); i++){
+					checking: for(int j = 0; j < shortestPath[i].size(); j++){
+						if(selection.contains(shortestPath[i].get(j).x, shortestPath[i].get(j).y)){
+							if(sklRes.getAverageBranchLength()[i]*sklRes.getBranches()[i]>maxLength){
+								maxLength = sklRes.getAverageBranchLength()[i]*sklRes.getBranches()[i];
+								chosenShortestPath = i;
+							}
+							break checking;
+						}							
+					}											
+				}
+			}			
+			
+		//count points 
+			int nPoints = shortestPath[chosenShortestPath].size();
+//			IJ.log("n" + nPoints);
+			
+		//get trace list -  new method
+			ArrayList<trackPoint> list = new ArrayList<trackPoint>(nPoints);
+			LinkedList<trackPoint> unsortedList = new LinkedList<trackPoint>();
+							
+			//find end point
+//			trackPoint2D startEnd = null; int startIndex = -1;
+			LinkedList<trackPoint> startEnds = new LinkedList <trackPoint>();
+			LinkedList<Integer> startIndexes = new LinkedList <Integer>();
+			
+			int counter;
+			trackPoint p, q;
+			for(int i = 0; i < nPoints; i++){
+				counter = 0;
+				p = new trackPoint(shortestPath[chosenShortestPath].get(i).x,
+						shortestPath[chosenShortestPath].get(i).y);
+				searchingSecond: for(int j = 0; j < nPoints; j++){
+					if(i!=j){
+						q = new trackPoint(shortestPath[chosenShortestPath].get(j).x,
+								shortestPath[chosenShortestPath].get(j).y);
+//						IJ.log(i + " - " + j + " = " + get2DDistance(p,q));
+						if(getDistance(p,q,NOZ) <= constants.sqrt2){
+//							IJ.log(i + "-" + j);
+							counter++;
+							if(counter==2){
+								break searchingSecond;
+							}
+						}
+					}					
+				}
+				if (counter==1){ 
+//					IJ.log("found start" + i);
+//					IJ.log("counter " + counter);
+					startEnds.add(new trackPoint(shortestPath[chosenShortestPath].get(i).x * pixelWidth,
+							shortestPath[chosenShortestPath].get(i).y * pixelHeight));
+					startIndexes.add(i);
+//					break searching;
+				}								
+			}
+			System.gc();
+			
+			if(startIndexes.isEmpty()){//Stop checking!
+				progress.notifyMessage("frame " + frame + ": no start found", ProgressDialog.NOTIFICATION);
+				return null;
+			}
+			
+			//obtain best point list
+			int minLeftOverPoints = Integer.MAX_VALUE, bestIndex = -2;; 
+			boolean isIn;
+			findingBest: for(int se = 0; se < startEnds.size(); se++){
+				ArrayList<trackPoint> tempList = new ArrayList<trackPoint>(nPoints);
+				//save unsorted list
+				for(int i = 0; i < nPoints; i++){
+					if(i != startIndexes.get(se)){
+						unsortedList.add(new trackPoint(shortestPath[chosenShortestPath].get(i).x*pixelWidth,
+								shortestPath[chosenShortestPath].get(i).y*pixelHeight));
+					}					
+				}
+				
+				//create sortedList (list)
+				{
+					tempList.add(startEnds.get(se));
+					
+//					IJ.log(unsortedList.size() + " uls");
+//					IJ.log(list.size() + " ls");
+					
+					int index = 0;
+					double distance;
+					int pIndex;
+					
+					sorting: while(!unsortedList.isEmpty()){
+						distance = Double.POSITIVE_INFINITY; 
+						p = null;
+						pIndex = -1;
+						for(int i = 0; i < unsortedList.size(); i++){
+							if(getDistance(unsortedList.get(i),tempList.get(index),NOZ) < distance){
+								p = unsortedList.get(i);
+								pIndex = i;
+								distance = getDistance(unsortedList.get(i),tempList.get(index),NOZ);
+							}
+						}
+						if(p.equals(null)){
+							IJ.log("Problem no next point found");
+						}					
+						unsortedList.remove(pIndex);						
+						if(Math.sqrt(Math.pow((int)Math.round(p.getX()/pixelWidth)-(int)Math.round(tempList.get(index).getX()/pixelWidth),2.0)+
+								Math.pow((int)Math.round(p.getY()/pixelHeight)-(int)Math.round(tempList.get(index).getY()/pixelHeight),2.0)) > constants.sqrt2){
+							isIn = false;
+							scanJnctn: for(int jnctn = 0; jnctn < sklRes.getListOfJunctionVoxels().size(); jnctn++){
+								if(sklRes.getListOfJunctionVoxels().get(jnctn).x == (int)Math.round(tempList.get(index).getX()/pixelWidth) 
+										&& sklRes.getListOfJunctionVoxels().get(jnctn).y == (int)Math.round(tempList.get(index).getY()/pixelWidth)){
+									isIn = true;
+									break scanJnctn;
+								}
+							}
+							if(!isIn){
+//								progress.notifyMessage("frame " + frame + " - try " + (se+1) + "/" + startEnds.size() + ": " + unsortedList.size() + " points discarded. X " 
+//										+ (int)Math.round(p.getX()/pixelWidth)
+//										+ " _ " + (int)Math.round(tempList.get(index).getX()/pixelWidth)
+//										+ " Y " + (int)Math.round(p.getY()/pixelHeight) 
+//										+ " _ " + (int)Math.round(tempList.get(index).getY()/pixelHeight), ProgressDialog.LOG);
+								break sorting;
+							}else{
+								tempList.add(p);
+								index++;
+							}							
+						}else{
+							tempList.add(p);
+							index++;
+						}					
+					}
+					tempList.trimToSize();	
+					if(!unsortedList.isEmpty()){						
+						if(minLeftOverPoints > unsortedList.size()){
+							list = new ArrayList<trackPoint>(tempList);
+							bestIndex = se;
+							minLeftOverPoints = unsortedList.size();
+						}else{
+							tempList.clear();
+							tempList = null;
+							System.gc();
+						}
+					}else{
+//						progress.notifyMessage("frame " + frame + " - try " + (se+1) + "/" + startEnds.size() + ": " + unsortedList.size() + " points discarded.", ProgressDialog.LOG);
+						list = new ArrayList<trackPoint>(tempList);
+						bestIndex = se;
+						minLeftOverPoints = 0;
+						break findingBest;
+					}
+				}				
+			}
+//			progress.notifyMessage("frame " + frame + " best index: " + (bestIndex+1) + " with " + minLeftOverPoints + " left-over points.", ProgressDialog.LOG);
+			nPoints = list.size();
+			
+			
+			//get statistics for first point				
+				OvalRoi roi0 = new OvalRoi((int)Math.round(list.get(0).getX()/impMax.getCalibration().pixelWidth) - 8,
+						(int)Math.round(list.get(0).getY()/impMax.getCalibration().pixelHeight) - 8, 17, 17);
+				impMaxSave.setRoi(roi0);
+				ImageStatistics stats0 = impMaxSave.getStatistics();
+				double intensity0 = stats0.area * stats0.mean;
+				double [] COM0 = getXYCenterOfMass(impMaxSaveThresholded,roi0);
+				
+			//get statistics for last point
+				OvalRoi roiE = new OvalRoi((int)Math.round(list.get(list.size()-1).getX()/impMax.getCalibration().pixelWidth) - 8,
+						(int)Math.round(list.get(list.size()-1).getY()/impMax.getCalibration().pixelHeight) - 8, 17, 17);
+				impMaxSave.setRoi(roiE);
+				ImageStatistics statsE = impMaxSave.getStatistics();
+				double intensityE = statsE.area*statsE.mean;
+				double [] COME = getXYCenterOfMass(impMaxSaveThresholded,roiE);
+				
+			//close images
+				impMaxSave.changes = false;
+				impMaxSave.close();
+//				impMaxSaveThresholded.changes = false;
+//				impMaxSaveThresholded.close();
+				impMax.changes = false;
+				impMax.close();
+				
+			//if first point is actually last point reverse list
+				ArrayList <trackPoint> newList = new ArrayList <trackPoint>(nPoints);
+			if(intensity0 < intensityE){
+				//add center of mass point of head (only if not equal to first skeletal point)
+				if(list.get(nPoints-1).getX() == COME [0] && list.get(nPoints-1).getY() == COME [1]){
+//					IJ.log("first point = COME");
+				}else if(addCOM){
+					newList.ensureCapacity(nPoints+1);
+					newList.add(new trackPoint(COME [0], COME [1]));
+				}				
+								
+				//invert list
+				for(int i = nPoints-1; i >= 0; i--){	
+					newList.add(list.get(i));	
+				}					
+			}else{				
+				//add center of mass point of head (only if not equal to first skeletal point)
+				if(list.get(0).getX() == COM0 [0] && list.get(0).getY() == COM0 [1]){
+//					IJ.log("first point = COM0");
+				}else if(addCOM){
+					newList.ensureCapacity(nPoints+1);
+					newList.add(new trackPoint(COM0 [0], COM0 [1]));
+				}
+								
+				//invert list
+				for(int i = 0; i < nPoints; i++){	
+					newList.add(list.get(i));	
+				}
+			}	
+			newList.trimToSize();
+			return new trace(newList,frame, minRefDist, maxRefDist);
+	}
+	
 	private static void userCheck(ImagePlus impMax) {
-		// TODO Auto-generated method stub
 		impMax.show();
 		new WaitForUserDialog("Check").show();
 		impMax.hide();
