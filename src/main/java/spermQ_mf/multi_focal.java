@@ -1,6 +1,6 @@
 /***===============================================================================
  
- SpermQ-MF Version v0.3.1
+ SpermQ-MF Version v0.3.2
  This program is free software; you can redistribute it and/or
  modify it under the terms of the GNU General Public License
  as published by the Free Software Foundation (http://www.gnu.org/licenses/gpl.txt )
@@ -41,7 +41,7 @@ import spermQ_mf.jnhsupport.*;
 public class multi_focal implements PlugIn, Measurements{
 	//Name
 		public static final String PLUGINNAME = "SpermQ-MF";
-		public static final String PLUGINVERSION = "v0.3.1";
+		public static final String PLUGINVERSION = "v0.3.2";
 		public static final double [] PLANEPOSITIONS20X = {31.00735294, 22.23676471, 9.266176471, 17.48970588};
 		public static final double [] PLANEPOSITIONS32X = {0.0, 3.5, 5, 8.5};
 	//Default Settings loader
@@ -612,13 +612,22 @@ public class multi_focal implements PlugIn, Measurements{
 				  	
 				//search for reversed traces (if tethered sperm)
 				  	if(tethered){
-				  		multi_focal_tools.reverseReversedTraces(traces, progress);
+				  		multi_focal_tools.reverseReversedTraces(traces, progress);				//METHOD improved 29.06.2020 (first used in version v0.3.2)
 				  		if(progress.isStopped())break running;
 				  		if(unifyStartPoints){
 					  		multi_focal_tools.unifyStartPoints(traces, progress);
 					  		if(progress.isStopped())break running;
 					  	}
-				  	}					  	
+				  	}else{
+				  		//Mode for free-swimming sperm - reverse all into one direction and than check which side is the one that moves forward
+				  		multi_focal_tools.reverseReversedTracesOfFree(traces, progress, 30);	//METHOD introduced 29.06.2020 (first used in version v0.3.2)
+				  	}
+				  	
+				//function to add head center of mass
+				  	if(addCOM){
+//				  		multi_focal_tools.add1stCOM(traces, imp, progress);
+				  		// TODO method to be established and copied alternatively to other COM method
+				  	}
 				
 				//upscale point trace
 				  	progress.updateBarText("upscale traces...");

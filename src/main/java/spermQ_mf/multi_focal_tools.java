@@ -1,6 +1,6 @@
 /***===============================================================================
  
- SpermQ-MF Version v0.3.0
+ SpermQ-MF Version v0.3.2
 
  This program is free software; you can redistribute it and/or
  modify it under the terms of the GNU General Public License
@@ -1014,6 +1014,8 @@ public class multi_focal_tools implements Measurements{
 	
 	/**
 	 * For tethered sperm. Reverse Traces whose last point is closer to the median start point than the first point
+	 * Method improved on 29.06.2020 (build with version 0.3.2, copied from SpermQ v0.2.1): use distance instead of sum of x and y difference to decide for closer point
+	 * @author Jan N. Hansen (github: hansenjn)
 	 * */
 	public static void reverseReversedTraces(ArrayList<trace> traces, ProgressDialog progress){
 		//remove 0 traces
@@ -1036,14 +1038,112 @@ public class multi_focal_tools implements Measurements{
 		double mediStY = tools.getMedian(stY);
 		
 		for(int i = 0; i < traces.size(); i++){
-			if(tools.mathAbs(mediStX - stX [i]) + tools.mathAbs(mediStY - stY [i])
-				< tools.mathAbs(mediStX - traces.get(i).getTracePoints().get(traces.get(i).getTracePoints().size()-1).getX())
-					+ tools.mathAbs(mediStY - traces.get(i).getTracePoints().get(traces.get(i).getTracePoints().size()-1).getY())){
+			if(Math.sqrt(Math.pow(mediStX - stX [i], 2.0) + Math.pow(mediStY - stY [i],2.0))
+				< Math.sqrt(Math.pow(mediStX - traces.get(i).getTracePoints().get(traces.get(i).getTracePoints().size()-1).getX(), 2.0)
+					+ Math.pow(mediStY - traces.get(i).getTracePoints().get(traces.get(i).getTracePoints().size()-1).getY(), 2.0))){
 			}else{
 				//invert tracepoints
 				traces.get(i).reverseTracePoints();
 			}
 			progress.updateBarText("Checking for reversed traces: trace nr " + i);
+		}		
+	}
+		
+	/**
+	 * For freely swimming sperm. Method introduced on 29.06.2020 (build with version 0.3.2, copied from SpermQ v0.2.1, 
+	 * originally developed on 14.08.2019 for SpermQ version v1.0.9)
+	 * @author Jan N. Hansen (github: hansenjn)
+	 * @description The method determines the median head position in the last traces (number of traces defined by 
+	 *  frameDistanceForComparison / 2) and checks whether the head is still closer than the tail; 
+	 *  if this not the case, the trace is inverted. Next the method checks whether the first point
+	 *  moves towards non-ciliary regions considering the last traces (number of traces defined by 
+	 *  frameDistanceForComparison) 
+	 * */
+	public static void reverseReversedTracesOfFree(ArrayList<trace> traces, ProgressDialog progress,
+			int frameDistanceForComparison){
+		//remove 0 traces
+		for(int i = traces.size()-1; i >= 0; i--){
+			if(traces.get(i).getTracePoints().size()==0){
+				traces.remove(i);
+				progress.notifyMessage("trace at t = " + i + " has been removed (no points)", ProgressDialog.LOG);
+			}
+		}	
+		traces.trimToSize();
+		
+		boolean [] correctFirst = new boolean [traces.size()];
+		correctFirst [0] = false;
+		double stX, stY, eX, eY, ostX, ostY;
+		double [] ostXs = new double [(int)(frameDistanceForComparison/2.0)];
+		double [] ostYs = new double [(int)(frameDistanceForComparison/2.0)];
+		int counter;
+		for(int i = 1; i < traces.size(); i++){
+			stX = traces.get(i).getTracePoints().get(0).getX();
+			stY = traces.get(i).getTracePoints().get(0).getY();
+			
+			eX = traces.get(i).getTracePoints().get(traces.get(i).getTracePoints().size()-1).getX();
+			eY = traces.get(i).getTracePoints().get(traces.get(i).getTracePoints().size()-1).getY();
+			
+			Arrays.fill(ostXs, Double.POSITIVE_INFINITY);
+			Arrays.fill(ostYs, Double.POSITIVE_INFINITY);
+			counter = 0;
+			for(int j = 1; j < (int)(frameDistanceForComparison/2.0)+1 && i-j >=0; j++){
+				ostXs [j-1] = traces.get(i-j).getTracePoints().get(0).getX();
+				ostYs [j-1]= traces.get(i-j).getTracePoints().get(0).getY();
+				counter ++;
+			}
+			
+			ostX = tools.getMedianOfRange(ostXs, 0, counter-1);
+			ostY = tools.getMedianOfRange(ostYs, 0, counter-1);
+			
+			if(Math.sqrt(Math.pow(stX-ostX, 2.0) + Math.pow(stY-ostY, 2.0))
+					<= Math.sqrt(Math.pow(eX-ostX, 2.0) + Math.pow(eY-ostY, 2.0))){
+				//all is ok, no inversion needed
+			}else{
+				//invert trace's points
+				traces.get(i).reverseTracePoints();
+			}
+			progress.updateBarText("Checking for reversed traces (free sperm): trace nr " + i);
+		}
+		
+		//check whether the first point moves towards non-ciliary regions
+		if(frameDistanceForComparison<traces.size()){
+			int counterWrong = 0;
+			double xC, yC, xCAll, yCAll;
+			int ct;
+			for(int i = frameDistanceForComparison; i < traces.size(); i++){
+				xCAll = 0.0; yCAll = 0.0; ct = 0;
+				for(int j = -1; j <= 1 && i + j < traces.size(); j++){
+					ct ++;
+					xC = traces.get(i+j).getTracePoints().get(0).getX() 
+							- traces.get(i+j).getTracePoints().get(traces.get(i+j).getTracePoints().size()-1).getX();
+					yC = traces.get(i+j).getTracePoints().get(0).getY() 
+							- traces.get(i+j).getTracePoints().get(traces.get(i+j).getTracePoints().size()-1).getY();
+					xCAll += traces.get(i+j).getTracePoints().get(0).getX() - xC/2.0;
+					yCAll += traces.get(i+j).getTracePoints().get(0).getY() - yC/2.0;
+				}
+				xCAll /= (double) ct;
+				yCAll /= (double) ct;
+						
+				stX = traces.get(i-frameDistanceForComparison).getTracePoints().get(0).getX();
+				stY = traces.get(i-frameDistanceForComparison).getTracePoints().get(0).getY();
+				
+				eX = traces.get(i-frameDistanceForComparison).getTracePoints().get(
+						traces.get(i-frameDistanceForComparison).getTracePoints().size()-1).getX();
+				eY = traces.get(i-frameDistanceForComparison).getTracePoints().get(
+						traces.get(i-frameDistanceForComparison).getTracePoints().size()-1).getY();
+				
+				if(Math.sqrt(Math.pow(xCAll-stX, 2.0) + Math.pow(yCAll-stY, 2.0))
+						> Math.sqrt(Math.pow(xCAll-eX, 2.0) + Math.pow(yCAll-eY, 2.0))){
+					counterWrong ++;
+				}	
+				progress.updateBarText("Checking general reversement: trace nr " + i);
+			}
+			if((double) counterWrong / (double) (traces.size() - frameDistanceForComparison) > 0.5){
+				for(int i = 0; i < traces.size(); i++){
+					//invert tracepoints
+					traces.get(i).reverseTracePoints();
+				}
+			}
 		}		
 	}
 	
