@@ -675,17 +675,13 @@ public class multi_focal_tools implements Measurements{
 	private static trace getTraceBySkeletonizationV2 (ImagePlus impMax, int frame, Roi selection, double sigma, String thresholdAlgorithm,
 			double minRefDist, double maxRefDist, ProgressDialog progress){	
 		ImagePlus impMaxSave = impMax.duplicate();
-		
-		//eventually scale down before finding threshold?	TODO
-		//eventually 8-bit conv before finding threshold?	TODO
-					
+							
 		//gauss-filter
 			impMax.getProcessor().blurGaussian(sigma);
 //			IJ.log("bl1");userCheck(impMax);
 		
 		//threshold image
 			thresholdImage(impMax,thresholdAlgorithm);
-			ImagePlus impMaxSaveThresholded = impMax.duplicate();
 			
 		//gauss-filter
 			impMax.getProcessor().blurGaussian(sigma);	
@@ -746,7 +742,6 @@ public class multi_focal_tools implements Measurements{
 			LinkedList<trackPoint> unsortedList = new LinkedList<trackPoint>();
 							
 			//find end point
-//			trackPoint2D startEnd = null; int startIndex = -1;
 			LinkedList<trackPoint> startEnds = new LinkedList <trackPoint>();
 			LinkedList<Integer> startIndexes = new LinkedList <Integer>();
 			
@@ -881,7 +876,6 @@ public class multi_focal_tools implements Measurements{
 				impMaxSave.setRoi(roi0);
 				ImageStatistics stats0 = impMaxSave.getStatistics();
 				double intensity0 = stats0.area * stats0.mean;
-				double [] COM0 = getXYCenterOfMass(impMaxSaveThresholded, roi0, 1);
 				
 			//get statistics for last point
 				OvalRoi roiE = new OvalRoi((int)Math.round(list.get(list.size()-1).getX()/impMax.getCalibration().pixelWidth) - 8,
@@ -889,13 +883,10 @@ public class multi_focal_tools implements Measurements{
 				impMaxSave.setRoi(roiE);
 				ImageStatistics statsE = impMaxSave.getStatistics();
 				double intensityE = statsE.area*statsE.mean;
-				double [] COME = getXYCenterOfMass(impMaxSaveThresholded, roiE, 1);
 				
 			//close images
 				impMaxSave.changes = false;
 				impMaxSave.close();
-//				impMaxSaveThresholded.changes = false;
-//				impMaxSaveThresholded.close();
 				impMax.changes = false;
 				impMax.close();
 				
@@ -907,7 +898,7 @@ public class multi_focal_tools implements Measurements{
 					newList.add(list.get(i));	
 				}					
 			}else{				
-				//invert list
+				//just copy list
 				for(int i = 0; i < nPoints; i++){	
 					newList.add(list.get(i));	
 				}
@@ -941,10 +932,14 @@ public class multi_focal_tools implements Measurements{
 				}
 			}			
 		}else{
-			for(int x = selection.getPolygon().getBounds().x; 
+			int startX = selection.getPolygon().getBounds().x, 
+					startY = selection.getPolygon().getBounds().y;
+			if(startX < 0) startX = 0;
+			if(startY < 0) startY = 0;
+			for(int x = startX; 
 					x < imp.getWidth() && x <= selection.getPolygon().getBounds().x 
 							+ selection.getPolygon().getBounds().width; x++){
-				for(int y = selection.getPolygon().getBounds().y; 
+				for(int y = startY; 
 						y < imp.getHeight() && y <= selection.getPolygon().getBounds().y
 								+ selection.getPolygon().getBounds().height; y++){
 					if(selection.getPolygon().contains(x,y)){
