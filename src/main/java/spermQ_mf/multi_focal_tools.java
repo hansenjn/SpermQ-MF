@@ -393,7 +393,7 @@ public class multi_focal_tools implements Measurements{
 	 * @param traceDet: sets the variant of processing the 4 focal planes into one image, in which the trace shall be calculated
 	 * */
 	public static ArrayList<trace> getObjectTraces(ImagePlus imp, String algorithm, double sigma, ProgressDialog progress, Roi selection, Roi selectionSD,
-			boolean calibrationMode, String traceDet, boolean addCOM, double minRefDist, double maxRefDist){
+			boolean calibrationMode, String traceDet, double minRefDist, double maxRefDist){
 		//not implemented for multichannel so far... 
 		if(imp.getNChannels()!=1) return null;
 		
@@ -406,7 +406,7 @@ public class multi_focal_tools implements Measurements{
 			
 //			ImagePlus sp = getSharpestPlane(imp, sliceDistances, sliceStep, minZPos, maxZPos);
 			ImagePlus sp = getSharpestPlane(imp, selectionSD);	
-			trace mipTrace = getTraceBySkeletonization(sp, 0, selection, sigma, algorithm, addCOM,  minRefDist, maxRefDist);
+			trace mipTrace = getTraceBySkeletonizationV2(sp, 0, selection, sigma, algorithm, minRefDist, maxRefDist, progress);
 			sp.close();
 			System.gc();
 			
@@ -448,7 +448,7 @@ public class multi_focal_tools implements Measurements{
 			
 			selImp = getSingleTimepoint(imp,t);
 			if(traceDet.equals(multi_focal.TRACEDETERMINATION [0])){	//"sharpest plane"
-				selImp = getSharpestPlane(selImp);
+				selImp = getSharpestPlane(selImp, selectionSD);
 			}else if(traceDet.equals(multi_focal.TRACEDETERMINATION [1])){	//"maximum-intensity-projection"
 				selImp = impProcessing.maxIntensityProjection(selImp);
 			}else if(traceDet.equals(multi_focal.TRACEDETERMINATION [2])){	//"average-intensity-projection"
@@ -458,7 +458,7 @@ public class multi_focal_tools implements Measurements{
 			}else if(traceDet.equals(multi_focal.TRACEDETERMINATION [4])){	//"sharpest plane in time projection"
 				selImp = impProcessing.getSingleImageFromStack(selImp, maxPos);
 			}
-			traceList.add(getTraceBySkeletonizationV2(selImp, t, selection, sigma, algorithm, addCOM, minRefDist, maxRefDist, progress));
+			traceList.add(getTraceBySkeletonizationV2(selImp, t, selection, sigma, algorithm, minRefDist, maxRefDist, progress));
 			
 			if(t%100 == 0)	System.gc();
 		}
@@ -614,7 +614,7 @@ public class multi_focal_tools implements Measurements{
 				impMaxSave.setRoi(roi0);
 				ImageStatistics stats0 = impMaxSave.getStatistics();
 				double intensity0 = stats0.area * stats0.mean;
-				double [] COM0 = getXYCenterOfMass(impMaxSaveThresholded,roi0);
+				double [] COM0 = getXYCenterOfMass(impMaxSaveThresholded,roi0, 1);
 				
 			//get statistics for last point
 				OvalRoi roiE = new OvalRoi((int)Math.round(list.get(list.size()-1).getX()/impMax.getCalibration().pixelWidth) - 8,
@@ -622,7 +622,7 @@ public class multi_focal_tools implements Measurements{
 				impMaxSave.setRoi(roiE);
 				ImageStatistics statsE = impMaxSave.getStatistics();
 				double intensityE = statsE.area*statsE.mean;
-				double [] COME = getXYCenterOfMass(impMaxSaveThresholded,roiE);
+				double [] COME = getXYCenterOfMass(impMaxSaveThresholded,roiE, 1);
 				
 			//close images
 				impMaxSave.changes = false;
@@ -672,7 +672,7 @@ public class multi_focal_tools implements Measurements{
 	 * 
 	 * To establish this method, code was derived from SpermQ v0.2.1, https://github.com/hansenjn/SpermQ‚
 	 * 	 * */
-	private static trace getTraceBySkeletonizationV2 (ImagePlus impMax, int frame, Roi selection, double sigma, String thresholdAlgorithm, boolean addCOM,
+	private static trace getTraceBySkeletonizationV2 (ImagePlus impMax, int frame, Roi selection, double sigma, String thresholdAlgorithm,
 			double minRefDist, double maxRefDist, ProgressDialog progress){	
 		ImagePlus impMaxSave = impMax.duplicate();
 		
@@ -881,7 +881,7 @@ public class multi_focal_tools implements Measurements{
 				impMaxSave.setRoi(roi0);
 				ImageStatistics stats0 = impMaxSave.getStatistics();
 				double intensity0 = stats0.area * stats0.mean;
-				double [] COM0 = getXYCenterOfMass(impMaxSaveThresholded,roi0);
+				double [] COM0 = getXYCenterOfMass(impMaxSaveThresholded, roi0, 1);
 				
 			//get statistics for last point
 				OvalRoi roiE = new OvalRoi((int)Math.round(list.get(list.size()-1).getX()/impMax.getCalibration().pixelWidth) - 8,
@@ -889,7 +889,7 @@ public class multi_focal_tools implements Measurements{
 				impMaxSave.setRoi(roiE);
 				ImageStatistics statsE = impMaxSave.getStatistics();
 				double intensityE = statsE.area*statsE.mean;
-				double [] COME = getXYCenterOfMass(impMaxSaveThresholded,roiE);
+				double [] COME = getXYCenterOfMass(impMaxSaveThresholded, roiE, 1);
 				
 			//close images
 				impMaxSave.changes = false;
@@ -902,27 +902,11 @@ public class multi_focal_tools implements Measurements{
 			//if first point is actually last point reverse list
 				ArrayList <trackPoint> newList = new ArrayList <trackPoint>(nPoints);
 			if(intensity0 < intensityE){
-				//add center of mass point of head (only if not equal to first skeletal point)
-				if(list.get(nPoints-1).getX() == COME [0] && list.get(nPoints-1).getY() == COME [1]){
-//					IJ.log("first point = COME");
-				}else if(addCOM){
-					newList.ensureCapacity(nPoints+1);
-					newList.add(new trackPoint(COME [0], COME [1]));
-				}				
-								
 				//invert list
 				for(int i = nPoints-1; i >= 0; i--){	
 					newList.add(list.get(i));	
 				}					
 			}else{				
-				//add center of mass point of head (only if not equal to first skeletal point)
-				if(list.get(0).getX() == COM0 [0] && list.get(0).getY() == COM0 [1]){
-//					IJ.log("first point = COM0");
-				}else if(addCOM){
-					newList.ensureCapacity(nPoints+1);
-					newList.add(new trackPoint(COM0 [0], COM0 [1]));
-				}
-								
 				//invert list
 				for(int i = 0; i < nPoints; i++){	
 					newList.add(list.get(i));	
@@ -942,27 +926,31 @@ public class multi_focal_tools implements Measurements{
 	 * @returns the X- and Y-coordinate of the center-of-mass within a selection at the current hyperstack-position.
 	 * @param imp: the image of which the COM shall be derived
 	 * @param selection: the Roi in which calculations are performed - if null, the whole image is included into analysis
-	 * 
+	 * @param stackImage: the stack image in which the center of mass shall be determined (1 <= stackimage <= number of stack images)
 	 * */
-	public static double [] getXYCenterOfMass (ImagePlus imp, Roi selection){
+	public static double [] getXYCenterOfMass (ImagePlus imp, Roi selection, int stackImage){
 		double [] COM = {0.0, 0.0};
 		double intensitySum = 0.0;
 		if(selection == null){
 			imp.deleteRoi();
 			for(int x = 0; x < imp.getWidth(); x++){
 				for(int y = 0; y < imp.getHeight(); y++){
-					intensitySum += imp.getStack().getVoxel(x, y, imp.getZ()-1);
-					COM [0] += imp.getStack().getVoxel(x, y, imp.getZ()-1) * x * imp.getCalibration().pixelWidth;
-					COM [1] += imp.getStack().getVoxel(x, y, imp.getZ()-1) * y * imp.getCalibration().pixelHeight;
+					intensitySum += imp.getStack().getVoxel(x, y, stackImage-1);
+					COM [0] += imp.getStack().getVoxel(x, y, stackImage-1) * x * imp.getCalibration().pixelWidth;
+					COM [1] += imp.getStack().getVoxel(x, y, stackImage-1) * y * imp.getCalibration().pixelHeight;
 				}
 			}			
 		}else{
-			for(int x = 0; x < imp.getWidth(); x++){
-				for(int y = 0; y < imp.getHeight(); y++){
+			for(int x = selection.getPolygon().getBounds().x; 
+					x < imp.getWidth() && x <= selection.getPolygon().getBounds().x 
+							+ selection.getPolygon().getBounds().width; x++){
+				for(int y = selection.getPolygon().getBounds().y; 
+						y < imp.getHeight() && y <= selection.getPolygon().getBounds().y
+								+ selection.getPolygon().getBounds().height; y++){
 					if(selection.getPolygon().contains(x,y)){
-						intensitySum += imp.getStack().getVoxel(x, y, imp.getZ()-1);
-						COM [0] += imp.getStack().getVoxel(x, y, imp.getZ()-1) * x * imp.getCalibration().pixelWidth;
-						COM [1] += imp.getStack().getVoxel(x, y, imp.getZ()-1) * y * imp.getCalibration().pixelHeight;						
+						intensitySum += imp.getStack().getVoxel(x, y, stackImage-1);
+						COM [0] += imp.getStack().getVoxel(x, y, stackImage-1) * x * imp.getCalibration().pixelWidth;
+						COM [1] += imp.getStack().getVoxel(x, y, stackImage-1) * y * imp.getCalibration().pixelHeight;						
 					}
 				}
 			}
@@ -1175,6 +1163,38 @@ public class multi_focal_tools implements Measurements{
 			traces.get(i).getTracePoints().add(0, new trackPoint(mediStX, mediStY));
 			progress.updateBarText("Saving merged start point: trace nr " + i);
 		}
+	}
+	
+	/**
+	 * Add the center of mass around the first point (8 px radius) as first point
+	 * Implemented on 30.06.2020, first use in version v0.3.2
+	 * @author Jan N. Hansen (github: hansenjn)
+	 * */
+	public static void add1stCOM (ArrayList<trace> traces, ImagePlus imp, ProgressDialog progress){
+		//remove 0 traces
+		for(int i = traces.size()-1; i >= 0; i--){
+			if(traces.get(i).getTracePoints().size()==0){
+				traces.remove(i);
+				progress.notifyMessage("trace at t = " + i + " has been removed (no points)", ProgressDialog.LOG);
+			}
+		}	
+		traces.trimToSize();
+		
+		ImagePlus impT;
+		double [] COM;
+		for(int i = 0; i < traces.size(); i++){
+			impT = impProcessing.getSingleImageFromStack(imp, imp.getStackIndex(1, 1, i+1)-1);
+			
+			OvalRoi roi0 = new OvalRoi((int)Math.round(traces.get(i).getTracePoints().get(0).getX()/impT.getCalibration().pixelWidth) - 8,
+					(int)Math.round(traces.get(i).getTracePoints().get(0).getY()/impT.getCalibration().pixelHeight) - 8, 17, 17);
+			impT.setRoi(roi0);
+			
+			impT = getSharpestPlane(impT,roi0);
+			
+			COM = getXYCenterOfMass(impT, roi0, 1);
+			traces.get(i).getTracePoints().add(0, new trackPoint(COM [0], COM [1]));
+			progress.updateBarText("COM added: trace nr " + i);
+		}		
 	}
 	
 	public static void adjustPointsViaNormalVector(ImagePlus imp, ArrayList<trace> traces, ProgressDialog progress, boolean saveNormalVectorRoiSet,

@@ -596,11 +596,11 @@ public class multi_focal implements PlugIn, Measurements{
 				  	progress.updateBarText("get object traces...");			 
 				  	if(calibrationTestMode){
 				  		traces = multi_focal_tools.getObjectTraces(imp, selectedThresholdMethod, gaussSigma, 
-				  				progress, selections [task], selectionsSD [task], true, selectedTraceDetermination, addCOM,
+				  				progress, selections [task], selectionsSD [task], true, selectedTraceDetermination,
 				  				minRefDist, maxRefDist);
 				  	}else{
 				  		traces = multi_focal_tools.getObjectTraces(imp, selectedThresholdMethod, gaussSigma, 
-				  				progress, selections [task], selectionsSD [task], calibrationMode, selectedTraceDetermination, addCOM,
+				  				progress, selections [task], selectionsSD [task], calibrationMode, selectedTraceDetermination,
 				  				minRefDist, maxRefDist);
 				  	}			  	
 				  	if(progress.isStopped())break running;
@@ -623,10 +623,10 @@ public class multi_focal implements PlugIn, Measurements{
 				  		multi_focal_tools.reverseReversedTracesOfFree(traces, progress, 30);	//METHOD introduced 29.06.2020 (first used in version v0.3.2)
 				  	}
 				  	
-				//function to add head center of mass
+				//function to add head center of mass - copied and adapted from SpermQ v0.2.1 (on 30.06.2020),
+				//first build in v0.3.2
 				  	if(addCOM){
-//				  		multi_focal_tools.add1stCOM(traces, imp, progress);
-				  		// TODO method to be established and copied alternatively to other COM method
+				  		multi_focal_tools.add1stCOM(traces, imp, progress);				  		
 				  	}
 				
 				//upscale point trace
