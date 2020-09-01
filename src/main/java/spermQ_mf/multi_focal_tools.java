@@ -75,7 +75,7 @@ public class multi_focal_tools implements Measurements{
 		//Kymograph minima and maxima
 		public static final double KYMIN_X = -50.0, KYMAX_X = 130.0,
 				KYMIN_Y = -130.0, KYMAX_Y = 130.0,
-				KYMIN_Z = -10.0, KYMAX_Z = 100.0,
+				KYMIN_Z = -50.0, KYMAX_Z = 60.0,
 				KYMIN_MAXINTENSITY = 1.0, KYMAX_MAXINTENSITY = 65533.0,
 				KYMIN_CURV = 1.0, KYMAX_CURV = 4.0,
 				KYMIN_CANGLE2D = -180.0, KYMAX_CANGLE2D = 180.0,

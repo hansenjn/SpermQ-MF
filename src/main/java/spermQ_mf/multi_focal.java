@@ -44,7 +44,7 @@ public class multi_focal implements PlugIn, Measurements{
 		public static final String PLUGINVERSION = "v0.3.2";
 		public static final double [] PLANEPOSITIONS20X = {31.00735294, 22.23676471, 9.266176471, 17.48970588};
 		public static final double [] PLANEPOSITIONS32X = {0.0, 3.5, 5, 8.5};
-		public static final double [] PLANEPOSITIONS32X_SETUP_SEA_URCHIN = {-4.173125, -0.900625, 0.746875, 4.326875};
+		public static final double [] PLANEPOSITIONS32X_SETUP_SEA_URCHIN = {26.3025, 29.5750, 31.2225, 34.8025};
 	//Default Settings loader
 		String [] selectionsDSL = {"Mouse 20x", "Mouse 20x (editable)", 
 				"Mouse 32x", "Mouse 32x (editable)",
