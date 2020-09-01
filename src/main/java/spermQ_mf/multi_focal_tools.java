@@ -91,7 +91,8 @@ public class multi_focal_tools implements Measurements{
 			TRACE_HRANGLE = 3;
 			
 		public static final double SPECIESLENGTH_HUMAN = 40,
-			SPECIESLENGTH_MOUSE = 100;
+			SPECIESLENGTH_MOUSE = 100,
+			SPECIESLENGTH_SEA_URCHIN = 45;
 		
 	/**
 	 * @deprecated

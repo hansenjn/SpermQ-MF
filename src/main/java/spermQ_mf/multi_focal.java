@@ -44,13 +44,15 @@ public class multi_focal implements PlugIn, Measurements{
 		public static final String PLUGINVERSION = "v0.3.2";
 		public static final double [] PLANEPOSITIONS20X = {31.00735294, 22.23676471, 9.266176471, 17.48970588};
 		public static final double [] PLANEPOSITIONS32X = {0.0, 3.5, 5, 8.5};
+		public static final double [] PLANEPOSITIONS32X_SETUP_SEA_URCHIN = {-4.173125, -0.900625, 0.746875, 4.326875};
 	//Default Settings loader
 		String [] selectionsDSL = {"Mouse 20x", "Mouse 20x (editable)", 
 				"Mouse 32x", "Mouse 32x (editable)",
 				"Human 20x", "Human 20x (editable)",
 				"Human 32x", "Human 32x (editable)",
 				"Fluorescent Tethered Human 20x", "Fluorescent Tethered Human 20x (editable)",
-				"Fluorescent Tethered Human 32x", "Fluorescent Tethered Human 32x (editable)"}; 
+				"Fluorescent Tethered Human 32x", "Fluorescent Tethered Human 32x (editable)",
+				"Sea Urchin 32x", "Sea Urchin 32x (editable)"}; 
 		String selectedDSL = selectionsDSL [5];
 		
 	//variables		
@@ -230,7 +232,7 @@ public class multi_focal implements PlugIn, Measurements{
 		else if(selectedDSL.equals(selectionsDSL[6]) || selectedDSL.equals(selectionsDSL[7])){
 			//human 32x
 			slicePosition = PLANEPOSITIONS32X;
-			xyCal = 34375;	//32x
+			xyCal = 0.34375;	//32x
 			unifyStartPoints = false;
 			selectedThresholdMethod = thresholdMethods [15];	//Triangle (human)
 			upscaleFold = 3;
@@ -282,7 +284,7 @@ public class multi_focal implements PlugIn, Measurements{
 		else if(selectedDSL.equals(selectionsDSL[10]) || selectedDSL.equals(selectionsDSL[11])){
 			//human 32x calcium
 			slicePosition = PLANEPOSITIONS32X;
-			xyCal = 34375;	//32x
+			xyCal = 0.34375;	//32x
 			unifyStartPoints = true;
 			selectedThresholdMethod = thresholdMethods [15];	//Triangle (human)
 			upscaleFold = 3;
@@ -304,6 +306,31 @@ public class multi_focal implements PlugIn, Measurements{
 			gaussSigma = 4.0;
 			speciesLength = multi_focal_tools.SPECIESLENGTH_MOUSE;
 			selectedTraceDetermination = TRACEDETERMINATION [4];
+		}else if(selectedDSL.equals(selectionsDSL[12]) || selectedDSL.equals(selectionsDSL[13])){
+			//sea urchin 32x
+			slicePosition = PLANEPOSITIONS32X_SETUP_SEA_URCHIN;
+			xyCal = 0.34375;	//32x
+			unifyStartPoints = false;
+			selectedThresholdMethod = thresholdMethods [15];	//Triangle (human)
+			upscaleFold = 3;
+			addCOM = false;
+			maxVectorLength = 30;
+			normalLength = 3.3;
+			smoothNormal = true;
+			saveVNRois = false;
+			preventHeadFromCorr = false;
+			preventPoints = 15;		
+			plusMinusDistanceForSmooth = 5*upscaleFold;
+			minRefDist = 0.0;
+			maxRefDist = 6.4;
+			acceptedZSmoothDistance = 9.6;
+			zSmoothingMethod = zSmoothingMethods [1];
+			curvRefDist = 10.0;
+			neglectedInitialArclength = 0.0;
+			hrPlusMinusRange = 15;
+			gaussSigma = 2.0;
+			speciesLength = multi_focal_tools.SPECIESLENGTH_SEA_URCHIN;
+			selectedTraceDetermination = TRACEDETERMINATION [4];
 		}
 		
 		
@@ -311,7 +338,8 @@ public class multi_focal implements PlugIn, Measurements{
 		GenericDialog
 		&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&*/
 		if(selectedDSL.equals(selectionsDSL[1]) || selectedDSL.equals(selectionsDSL[3]) || selectedDSL.equals(selectionsDSL[5])
-				|| selectedDSL.equals(selectionsDSL[7]) || selectedDSL.equals(selectionsDSL[9]) || selectedDSL.equals(selectionsDSL[11])){
+				|| selectedDSL.equals(selectionsDSL[7]) || selectedDSL.equals(selectionsDSL[9]) || selectedDSL.equals(selectionsDSL[11])
+				|| selectedDSL.equals(selectionsDSL[13])){
 			GenericDialog gd = new GenericDialog(PLUGINNAME + " - detailed settings");		
 //			setInsets(top, left, bottom)
 			gd.setInsets(0,0,0);	gd.addMessage(PLUGINNAME + ", version " + PLUGINVERSION + " (\u00a9 2013-" + constants.dateY.format(new Date()) + ", JN Hansen \u0026 JF Jikeli)", constants.Head1);
