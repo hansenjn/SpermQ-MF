@@ -315,7 +315,7 @@ public class multi_focal implements PlugIn, Measurements{
 			upscaleFold = 3;
 			addCOM = false;
 			maxVectorLength = 30;
-			normalLength = 3.3;
+			normalLength = 4.5;
 			smoothNormal = true;
 			saveVNRois = false;
 			preventHeadFromCorr = false;
